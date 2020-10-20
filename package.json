@@ -1,0 +1,27 @@
+{
+  "name": "img-color-test",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@alex-taxiera/eslint-config-esm": "^1.0.2",
+    "eslint": "^7.11.0",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-modules-newline": "0.0.4",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^4.0.1"
+  },
+  "dependencies": {
+    "helica": "github:moondrop/helica",
+    "node-fetch": "^2.6.1",
+    "query-string": "^6.13.6"
+  }
+}

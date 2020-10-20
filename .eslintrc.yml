@@ -1,0 +1,8 @@
+env:
+  es6: true
+parserOptions:
+  ecmaVersion: 2020
+  sourceType: module
+extends:
+  - '@alex-taxiera/eslint-config-cjs'
+rules: {}
