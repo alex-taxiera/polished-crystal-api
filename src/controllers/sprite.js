@@ -63,6 +63,7 @@ class SpriteName {
     }
 
     try {
+      console.time('fetch')
       const [
         spriteBuffer,
         pal,
@@ -74,12 +75,15 @@ class SpriteName {
           query.shiny === 'true',
         ),
       ])
+      console.timeEnd('fetch')
 
+      console.time('img')
       const img = await processImage(
         spriteBuffer.toString('base64'),
         pal,
         query.scale,
       )
+      console.timeEnd('img')
 
       helica.send(res, img)
     } catch (error) {
