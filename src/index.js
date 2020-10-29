@@ -2,13 +2,18 @@
 
 import helica from 'helica'
 
+import * as polishedCrystal from './controllers/polished-crystal.js'
 import * as sprite from './controllers/sprite.js'
+import * as stat from './controllers/stats.js'
 
-const app = new helica.Server({ sslApp: false, debug: true })
+const debug = process.env.NODE_ENV !== 'production'
+const app = new helica.Server({ sslApp: false, debug })
+const versionedPath = '/:version'
+polishedCrystal.loadRoute(app)
+sprite.loadRoute(app, versionedPath)
+stat.loadRoute(app, versionedPath)
 
-sprite.loadRoute(app, '/v1')
-
-app.run()
+app.run('0.0.0.0', 3000)
 
 // main()
 // async function main () {

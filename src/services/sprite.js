@@ -1,9 +1,7 @@
 import { spawn } from 'child_process'
 import {
   join,
-  dirname,
 } from 'path'
-import { fileURLToPath } from 'url'
 
 import fetch from 'node-fetch'
 
@@ -11,45 +9,29 @@ import {
   PC_BASE_URL,
   PC_PAL_NORMAL,
   PC_PAL_SHINY,
-  PC_POKEMON_ROUTE,
+  PC_SPRITE_PATH,
   PC_SPRITE,
 } from '../utils/constants.js'
+
 import { handleError } from '../utils/fetch-handle-error.js'
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
+import {
+  dirname,
+} from '../utils/dirname.js'
 
-export async function fetchPokemonResources (
-  pokemon,
-  palPokemon,
-) {
-  const route = `${PC_BASE_URL}${PC_POKEMON_ROUTE}/${pokemon}`
-  const palRoute = palPokemon
-    ? `${PC_BASE_URL}${PC_POKEMON_ROUTE}/${palPokemon}`
-    : route
+export function fetchSprite (pokemon, version) {
+  const route = `${PC_BASE_URL}/${version}${PC_SPRITE_PATH}/${pokemon}`
+  return fetch(`${route}${PC_SPRITE}`)
+    .then(handleError)
+    .then((res) => res.buffer())
+}
 
-  const [
-    spriteBuffer,
-    normalPAL,
-    shinyPAL,
-  ] = await Promise.all([
-    fetch(`${route}${PC_SPRITE}`)
-      .then(handleError)
-      .then((res) => res.buffer()),
-    fetch(`${palRoute}${PC_PAL_NORMAL}`)
-      .then(handleError)
-      .then((res) => res.text())
-      .then(processPALFile),
-    fetch(`${palRoute}${PC_PAL_SHINY}`)
-      .then(handleError)
-      .then((res) => res.text())
-      .then(processPALFile),
-  ])
-
-  return {
-    spriteBuffer,
-    normalPAL,
-    shinyPAL,
-  }
+export function fetchPAL (pokemon, version, shiny = false) {
+  const route = `${PC_BASE_URL}/${version}${PC_SPRITE_PATH}/${pokemon}`
+  return fetch(`${route}${shiny ? PC_PAL_SHINY : PC_PAL_NORMAL}`)
+    .then(handleError)
+    .then((res) => res.text())
+    .then(processPALFile)
 }
 
 export function processPALFile (palString) {
@@ -71,7 +53,7 @@ export function processPALFile (palString) {
 export async function processImage (base64, pal, scale) {
   return new Promise((resolve, reject) => {
     const py = spawn('python', [
-      join(__dirname, '../computations/process-image.py'),
+      join(dirname(import.meta), '../computations/process-image.py'),
     ])
 
     py

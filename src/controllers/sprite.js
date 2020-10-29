@@ -2,19 +2,37 @@ import helica from 'helica'
 import queryString from 'query-string'
 
 import {
-  fetchPokemonResources,
+  fetchPAL,
+  fetchSprite,
   processImage,
-} from '../services/polished-crystal.js'
+} from '../services/sprite.js'
+import {
+  listPokemon,
+} from '../services/stats.js'
+import {
+  PC_BAD_SPRITES,
+  PC_SPRITE_PATH,
+} from '../utils/constants.js'
 import {
   routeLoader,
 } from '../utils/route-loader.js'
 
-const path = 'sprite'
+const path = '/pokemon/sprite'
 
 class Sprite {
 
-  get (res) {
-    helica.send(res, 'use sprite/:name')
+  async get (res, req) {
+    const sprites = await listPokemon(req.params.version, PC_SPRITE_PATH)
+
+    helica.json(
+      res,
+      sprites
+        .filter((file) =>
+          file.type === 'tree' &&
+          PC_BAD_SPRITES.every((sprite) => file.name !== sprite),
+        )
+        .map((file) => file.name),
+    )
   }
 
 }
@@ -22,7 +40,15 @@ class Sprite {
 class SpriteName {
 
   async get (res, req) {
-    const name = req.parameters[0]
+    const {
+      name,
+      version,
+    } = req.parameters
+
+    if (PC_BAD_SPRITES.includes(name)) {
+      helica.send(res, 'please use a pokemon name with a sprite', 400)
+    }
+    const backupPal = PC_BAD_SPRITES.find((sprite) => name.startsWith(sprite))
     const query = queryString.parse(req.query)
 
     if (query.scale) {
@@ -32,28 +58,31 @@ class SpriteName {
       }
 
       if (num < 1 || num > 8) {
-        helica.send(res, 'resize factor is out of range [1 8]', 400)
+        helica.send(res, 'resize factor is out of range [1,8]', 400)
       }
     }
 
     try {
-      console.time('fetchPokemonResources')
-      const {
+      const [
         spriteBuffer,
-        normalPAL,
-        shinyPAL,
-      } = await fetchPokemonResources(name, query.pal)
-      console.timeEnd('fetchPokemonResources')
+        pal,
+      ] = await Promise.all([
+        fetchSprite(name, version),
+        fetchPAL(
+          query.pal ?? backupPal ?? name,
+          version,
+          query.shiny === 'true',
+        ),
+      ])
 
       const img = await processImage(
         spriteBuffer.toString('base64'),
-        query.shiny === 'true' ? shinyPAL : normalPAL,
+        pal,
         query.scale,
       )
 
       helica.send(res, img)
     } catch (error) {
-      console.log('error :>> ', error);
       switch (error.message) {
         case '404':
           helica.send(res, 'pokemon not found', 404)
@@ -67,16 +96,7 @@ class SpriteName {
 
 }
 
-class SpriteCount {
-
-  get (res) {
-    helica.send(res, 'why did you try this?')
-  }
-
-}
-
 export const loadRoute = routeLoader((app, basePath) => {
   app.addResource(`${basePath}${path}`, Sprite)
   app.addResource(`${basePath}${path}/:name`, SpriteName)
-  app.addResource(`${basePath}${path}/count`, SpriteCount)
 })
