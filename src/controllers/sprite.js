@@ -22,7 +22,7 @@ const path = '/pokemon/sprite'
 class Sprite {
 
   async get (res, req) {
-    const sprites = await listPokemon(req.params.version, PC_SPRITE_PATH)
+    const sprites = await listPokemon(req.parameters.version, PC_SPRITE_PATH)
 
     helica.json(
       res,

@@ -15,7 +15,7 @@ const path = '/pokemon/stat'
 class Stat {
 
   async get (res, req) {
-    const pokemon = await listPokemon(req.params.version, PC_BASE_STATS_PATH)
+    const pokemon = await listPokemon(req.parameters.version, PC_BASE_STATS_PATH)
 
     helica.json(
       res,

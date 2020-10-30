@@ -1,15 +1,10 @@
 {
-  "name": "img-color-test",
-  "version": "1.0.0",
-  "description": "",
+  "name": "polished-crystal-api",
   "type": "module",
-  "main": "src/index.js",
   "scripts": {
     "start": "node src"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@alex-taxiera/eslint-config-esm": "^1.0.2",
     "eslint": "^7.11.0",
