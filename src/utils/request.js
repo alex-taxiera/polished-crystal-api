@@ -14,7 +14,7 @@ export const decompressors = {
   gzip: zlib.createGunzip,
 }
 
-export default function request (
+export function request (
   url,
   options = {},
 ) {
