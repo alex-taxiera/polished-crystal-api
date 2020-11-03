@@ -22,7 +22,10 @@ const path = '/pokemon/sprite'
 class Sprite {
 
   async get (res, req) {
-    const sprites = await listPokemon(req.parameters.version, PC_SPRITE_PATH)
+    const sprites = await listPokemon(
+      req.parameters.version.toLowerCase(),
+      PC_SPRITE_PATH,
+    )
 
     helica.json(
       res,
@@ -40,10 +43,8 @@ class Sprite {
 class SpriteName {
 
   async get (res, req) {
-    const {
-      name,
-      version,
-    } = req.parameters
+    const name = req.parameters.name.toLowerCase()
+    const version = req.parameters.version.toLowerCase()
 
     if (PC_BAD_SPRITES.includes(name)) {
       helica.send(res, 'please use a pokemon name with a sprite', 400)
@@ -63,7 +64,6 @@ class SpriteName {
     }
 
     try {
-      console.time('fetch')
       const [
         spriteBuffer,
         pal,
@@ -75,15 +75,12 @@ class SpriteName {
           query.shiny === 'true',
         ),
       ])
-      console.timeEnd('fetch')
 
-      console.time('img')
       const img = await processImage(
         spriteBuffer.toString('base64'),
         pal,
         query.scale,
       )
-      console.timeEnd('img')
 
       helica.send(res, img)
     } catch (error) {

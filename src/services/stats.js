@@ -105,22 +105,7 @@ export function processEvosAttacksFile (file, pokemon) {
       for (const end of [ 'else', 'endc' ]) {
         const store = end === 'else' ? faithful : unfaithful
         for (i; lines[i] !== end; i++) {
-          const [
-            type,
-            requirement,
-            to,
-          ] = lines[i]
-            .split(/\s+/)
-            .filter((_, j) => j > 0 && j < 4)
-            .join('')
-            .split(',')
-            .map(quiet)
-
-          store.evolutions.push({
-            type: type.split('_')[1],
-            requirement,
-            to,
-          })
+          store.evolutions.push(readEvolutionLine(lines[i]))
         }
 
         i++
@@ -129,41 +114,10 @@ export function processEvosAttacksFile (file, pokemon) {
       i--
     } else if (lines[i] === 'if !DEF(FAITHFUL)') {
       hasFaithful = true
-      const [
-        type,
-        requirement,
-        to,
-      ] = lines[++i]
-        .split(/\s+/)
-        .filter((_, j) => j > 0 && j < 4)
-        .join('')
-        .split(',')
-        .map(quiet)
-
-      unfaithful.evolutions.push({
-        type: type.split('_')[1],
-        requirement,
-        to,
-      })
-
+      unfaithful.evolutions.push(readEvolutionLine(lines[++i]))
       i++
     } else {
-      const [
-        type,
-        requirement,
-        to,
-      ] = lines[i]
-        .split(/\s+/)
-        .filter((_, j) => j > 0 && j < 4)
-        .join('')
-        .split(',')
-        .map(quiet)
-
-      faithful.evolutions.push({
-        type: type.split('_')[1],
-        requirement,
-        to,
-      })
+      faithful.evolutions.push(readEvolutionLine(lines[i]))
     }
   }
 
@@ -233,6 +187,24 @@ export function processEvosAttacksFile (file, pokemon) {
   return hasFaithful ? { faithful, unfaithful } : faithful
 }
 
+export function readEvolutionLine (line) {
+  const [
+    type,
+    requirement,
+    to,
+  ] = line
+    .split(/\s+/)
+    .filter((_, j) => j > 0 && j < 4)
+    .join('')
+    .split(',')
+
+  return {
+    type: quiet(type.split('_')[1]),
+    requirement: quiet(requirement),
+    to: quiet(to),
+  }
+}
+
 export function processStepForBaseStats (store, lines, lineNumber, step) {
   const numLines = step.lines ?? 1
   const currentLines = lines
@@ -258,7 +230,12 @@ export function processBaseStatsFile (baseStatsString) {
   const lines = baseStatsString
     .split('\n')
     .map((line) => line.replace('\t', ''))
-    .filter((line) => line && !line.startsWith('INCBIN'))
+    .filter(
+      (line) => line &&
+        !line.startsWith('INCBIN') &&
+        !line.startsWith('; assumes') &&
+        !line.includes('frontpic dimensions'),
+    )
 
   const unfaithful = {}
   const faithful = {}
@@ -405,7 +382,7 @@ export function readHeldItemLines (lines) {
     ...new Set(
       lines
         .map((line) => quiet(line.split(/\s+/)[1]))
-        .filter((item) => item !== 'No Item'),
+        .filter((item) => item !== 'No Item' && item !== 'Always Item 2'),
     ),
   ]
 }
@@ -417,14 +394,19 @@ export function readBreedData (line) {
     .join('')
     .split(',')
 
-  const female = parseFloat(
-    gender.split('_').filter((_, i) => i > 0).join('.'),
-  )
+  const genderData = {
+    genderless: false,
+  }
+  if (gender === 'GENDERLESS') {
+    genderData.genderless = true
+  } else {
+    genderData.female = parseFloat(
+      gender.split('_').filter((_, i) => i > 0).join('.'),
+    )
+    genderData.male = 100 - genderData.female
+  }
   return {
-    gender: {
-      female,
-      male: 100 - female,
-    },
+    gender: genderData,
     hatchCycles: parseInt(hatchCycles),
   }
 }

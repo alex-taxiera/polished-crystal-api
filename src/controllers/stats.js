@@ -15,7 +15,10 @@ const path = '/pokemon/stat'
 class Stat {
 
   async get (res, req) {
-    const pokemon = await listPokemon(req.parameters.version, PC_BASE_STATS_PATH)
+    const pokemon = await listPokemon(
+      req.parameters.version.toLowerCase(),
+      PC_BASE_STATS_PATH,
+    )
 
     helica.json(
       res,
@@ -29,17 +32,15 @@ class Stat {
 class StatName {
 
   async get (res, req) {
-    const {
-      name,
-      version,
-    } = req.parameters
+    const name = req.parameters.name.toLowerCase()
+    const version = req.parameters.version.toLowerCase()
 
     const [
       stats,
       evosMoves,
     ] = await Promise.all([
       fetchBaseStats(name, version),
-      fetchEvosMoves(name, version),
+      fetchEvosMoves(evosMovesName(name), version),
     ])
 
     helica.json(
@@ -48,6 +49,22 @@ class StatName {
     )
   }
 
+}
+
+function evosMovesName (name) {
+  if (name.startsWith('mewtwo')) {
+    return 'mewtwo'
+  }
+  const [ trueName, form ] = name.split('_')
+
+  switch (form) {
+    case 'plain':
+    case 'alolan':
+    case 'galarian':
+      return `${trueName}${form}`
+    default:
+      return name.includes('_') ? name.replace(/_/g, '') : name
+  }
 }
 
 export function statView (stats, evosMoves) {

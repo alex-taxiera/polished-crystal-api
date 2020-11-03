@@ -3,8 +3,6 @@ import {
   join,
 } from 'path'
 
-import fetch from 'node-fetch'
-
 import {
   PC_BASE_URL,
   PC_PAL_NORMAL,
@@ -12,8 +10,6 @@ import {
   PC_SPRITE_PATH,
   PC_SPRITE,
 } from '../utils/constants.js'
-
-import { handleError } from '../utils/fetch-handle-error.js'
 
 import {
   dirname,
