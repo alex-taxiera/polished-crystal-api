@@ -1,4 +1,8 @@
 import helica from 'helica'
+import {
+  fetchMoveNames,
+  findMoveName,
+} from '../services/move.js'
 
 import {
   fetchBaseStats,
@@ -9,6 +13,7 @@ import { PC_BASE_STATS_PATH } from '../utils/constants.js'
 import {
   routeLoader,
 } from '../utils/route-loader.js'
+import { moveSummaryView } from './move.js'
 
 const path = '/pokemon/stat'
 
@@ -38,14 +43,16 @@ class StatName {
     const [
       stats,
       evosMoves,
+      moveNames,
     ] = await Promise.all([
       fetchBaseStats(name, version),
       fetchEvosMoves(evosMovesName(name), version),
+      fetchMoveNames(version),
     ])
 
     helica.json(
       res,
-      statView(stats, evosMoves),
+      statView(stats, evosMoves, moveNames),
     )
   }
 
@@ -63,11 +70,11 @@ function evosMovesName (name) {
     case 'galarian':
       return `${trueName}${form}`
     default:
-      return name.includes('_') ? name.replace(/_/g, '') : name
+      return name.replace(/_/g, '')
   }
 }
 
-export function statView (stats, evosMoves) {
+export function statView (stats, evosMoves, moveNames) {
   const base = stats.faithful ?? stats
 
   return {
@@ -83,8 +90,12 @@ export function statView (stats, evosMoves) {
     growthRate: base.growthRate,
     baseStats: base.baseStats,
     evYield: base.evYield,
-    movesByLevel: evosMoves.faithful?.moves ?? evosMoves.moves,
-    movesByTMHM: base.tms,
+    movesByLevel: (evosMoves.faithful?.moves ?? evosMoves.moves)
+      .map((move) => ({
+        ...moveSummaryView(move, moveNames),
+        level: move.level,
+      })),
+    movesByTMHM: base.tms.map((id) => moveSummaryView({ id }, moveNames)),
     unfaithful: stats.unfaithful || evosMoves.unfaithful
       ? {
         ...stats.unfaithful,
@@ -93,6 +104,25 @@ export function statView (stats, evosMoves) {
       }
       : undefined,
   }
+}
+
+function movesView (moves, names) {
+  return moves.map((move) => {
+    const isLevelMove = move.move != null
+    const id = isLevelMove ? move.move : move
+    const name = names.find(findMoveName(id))
+
+    return isLevelMove ? {
+      ...move,
+      move: {
+        id: move.move,
+        name,
+      },
+    } : {
+      id: move,
+      name,
+    }
+  })
 }
 
 export const loadRoute = routeLoader((app, basePath) => {

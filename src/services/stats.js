@@ -84,10 +84,7 @@ export function processEvosAttacksFile (file, pokemon) {
     evolutions: [],
     moves: [],
   }
-  const unfaithful = {
-    evolutions: [],
-    moves: [],
-  }
+  const unfaithful = {}
 
   const lines = text.replace(/\t/g, '').split('\n')
   let hasFaithful = false
@@ -102,6 +99,9 @@ export function processEvosAttacksFile (file, pokemon) {
     if (lines[i] === 'if DEF(FAITHFUL)') {
       hasFaithful = true
       i++
+      if (!unfaithful.evolutions) {
+        unfaithful.evolutions = []
+      }
       for (const end of [ 'else', 'endc' ]) {
         const store = end === 'else' ? faithful : unfaithful
         for (i; lines[i] !== end; i++) {
@@ -114,6 +114,9 @@ export function processEvosAttacksFile (file, pokemon) {
       i--
     } else if (lines[i] === 'if !DEF(FAITHFUL)') {
       hasFaithful = true
+      if (!unfaithful.evolutions) {
+        unfaithful.evolutions = []
+      }
       unfaithful.evolutions.push(readEvolutionLine(lines[++i]))
       i++
     } else {
@@ -129,6 +132,9 @@ export function processEvosAttacksFile (file, pokemon) {
     if (lines[i] === 'if DEF(FAITHFUL)') {
       hasFaithful = true
       i++
+      if (!unfaithful.moves) {
+        unfaithful.moves = []
+      }
       for (const end of [ 'else', 'endc' ]) {
         const store = end === 'else' ? faithful : unfaithful
 
@@ -144,7 +150,7 @@ export function processEvosAttacksFile (file, pokemon) {
 
           store.moves.push({
             level: parseInt(level),
-            move: quiet(move),
+            id: move,
           })
         }
 
@@ -152,6 +158,9 @@ export function processEvosAttacksFile (file, pokemon) {
       }
     } else if (lines[i] === 'if !DEF(FAITHFUL)') {
       hasFaithful = true
+      if (!unfaithful.moves) {
+        unfaithful.moves = []
+      }
       const [
         level,
         move,
@@ -163,7 +172,7 @@ export function processEvosAttacksFile (file, pokemon) {
 
       unfaithful.moves.push({
         level: parseInt(level),
-        move: quiet(move),
+        id: move,
       })
 
       i++
@@ -179,7 +188,7 @@ export function processEvosAttacksFile (file, pokemon) {
 
       faithful.moves.push({
         level: parseInt(level),
-        move: quiet(move),
+        id: move,
       })
     }
   }
@@ -229,7 +238,7 @@ export function processStepForBaseStats (store, lines, lineNumber, step) {
 export function processBaseStatsFile (baseStatsString) {
   const lines = baseStatsString
     .split('\n')
-    .map((line) => line.replace('\t', ''))
+    .map((line) => line.replace(/\t/g, ''))
     .filter(
       (line) => line &&
         !line.startsWith('INCBIN') &&
@@ -304,8 +313,7 @@ export function processBaseStatsFile (baseStatsString) {
           .split(/\s+/)
           .filter((_, i) => i > 0)
           .join('')
-          .split(',')
-          .map(quiet),
+          .split(','),
     },
   ]
 

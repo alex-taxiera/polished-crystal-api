@@ -6,6 +6,9 @@ export const PC_SPRITE_PATH = '/gfx/pokemon'
 export const PC_BASE_STATS_PATH = '/data/pokemon/base_stats'
 export const PC_ABILITY_DESCRIPTIONS = '/data/abilities/descriptions.asm'
 export const PC_ABILITY_NAMES = '/data/abilities/names.asm'
+export const PC_MOVE_NAMES = '/data/moves/names.asm'
+export const PC_MOVE_DATA = '/data/moves/moves.asm'
+export const PC_MOVE_DESCRIPTIONS = '/data/moves/descriptions.asm'
 export const PC_EVOS_ATTACKS = '/data/pokemon/evos_attacks.asm'
 export const PC_BAD_SPRITES = [
   'arbok',

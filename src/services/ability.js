@@ -5,6 +5,7 @@ import {
   PC_BASE_URL,
 } from '../utils/constants.js'
 import { handleError } from '../utils/fetch-handle-error.js'
+import { readTwoPartText } from '../utils/read-crystal-text.js'
 
 export function listAbilities (version) {
   const route = `${PC_BASE_URL}/${version}/${PC_ABILITY_NAMES}`
@@ -40,7 +41,5 @@ export function readAbilityDescription (text, ability) {
     'si',
   )
 
-  const { first, second } = text.match(regex).groups
-
-  return `${first} ${second}`
+  return readTwoPartText(text.match(regex).groups)
 }
