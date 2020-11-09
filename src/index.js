@@ -4,6 +4,7 @@ import config from 'config'
 import * as polishedCrystal from './controllers/polished-crystal.js'
 import * as sprite from './controllers/sprite.js'
 import * as stat from './controllers/stats.js'
+import * as ability from './controllers/ability.js'
 import * as option from './controllers/option.js'
 
 import {
@@ -19,5 +20,6 @@ option.loadRoute(app)
 polishedCrystal.loadRoute(app)
 sprite.loadRoute(app, versionedPath)
 stat.loadRoute(app, versionedPath)
+ability.loadRoute(app, versionedPath)
 
 app.run('0.0.0.0', config.has('PORT') ? config.get('PORT') : 3000)
