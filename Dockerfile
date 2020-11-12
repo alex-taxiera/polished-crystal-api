@@ -37,9 +37,9 @@ ENV PYTHONUNBUFFERED=1
 
 EXPOSE 3000
 
-COPY . .
 COPY --from=pybuilder /root/.local /root/.local
 COPY --from=nodebuilder ./node_modules ./node_modules
+COPY . .
 ENV PATH=/root/.local/bin:$PATH
 
 CMD ["npm", "start"]
