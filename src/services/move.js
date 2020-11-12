@@ -5,10 +5,11 @@ import {
   PC_BASE_URL,
   PC_MOVE_DATA,
   PC_MOVE_DESCRIPTIONS,
+  PC_TMHM_MOVES,
 } from '../utils/constants.js'
 import { readTwoPartText } from '../utils/read-crystal-text.js'
 
-const MOVE_SUFFIX = '_M'
+export const MOVE_SUFFIX = '_M'
 
 export function fetchMoveData (version, id) {
   return fetch(`${PC_BASE_URL}/${version}/${PC_MOVE_DATA}`)
@@ -22,6 +23,12 @@ export function fetchMoveNames (version) {
     .then((text) => [ ...text.matchAll(/db\s"(?<name>.+?)@/g) ].map((match) => match.groups.name))
 }
 
+export function fetchTMHMs (version) {
+  return fetch(`${PC_BASE_URL}/${version}/${PC_TMHM_MOVES}`)
+    .then((res) => res.text())
+    .then(processTMHMs)
+}
+
 export function findMoveName (moveNames, moveId) {
   const actualMove = moveId.endsWith(MOVE_SUFFIX)
     ? moveId.slice(0, (MOVE_SUFFIX.length * -1))
@@ -31,6 +38,15 @@ export function findMoveName (moveNames, moveId) {
     .find((name) =>
       name.toLowerCase().replace(/-|\s/g, '') === actualMove.toLowerCase().replace(/_/g, ''),
     )
+}
+
+export function processTMHMs (text) {
+  const regex = /db\s(?<name>.+?)\s+;\s+(?<tmhm>.+?)\s/gs
+
+  return [ ...text.matchAll(regex) ].reduce((ax, { groups }) => {
+    ax[groups.name] = groups.tmhm
+    return ax
+  }, {})
 }
 
 export function processMoveData (text, id) {
@@ -47,7 +63,11 @@ export function processMoveData (text, id) {
   if (id) {
     if (Array.isArray(id)) {
       return data.reduce((ax, moveData) => {
-        if (id.includes(moveData.id.toLowerCase())) {
+        if (
+          id.includes(moveData.id.toLowerCase()) ||
+          id.map((x) => `${x}${MOVE_SUFFIX}`.toLowerCase())
+            .includes(moveData.id.toLowerCase())
+        ) {
           const existingIndex = ax.findIndex((m) => m.id === moveData.id)
           if (existingIndex > -1) {
             ax[existingIndex] = combineUnfaithfulMoveData([

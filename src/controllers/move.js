@@ -96,17 +96,19 @@ export function moveBulkView (moves, moveNames, moveDescriptions) {
 }
 
 export function moveView (move, moveNames, moveDescriptions) {
+  const power = parseInt(move.power)
+  const effectChance = parseInt(move.effectChance)
+
   return {
-    id: move.id.toUpperCase(),
-    name: findMoveName(moveNames, move.id),
+    ...moveSummaryView(move, moveNames),
     description: getMoveDescription(moveDescriptions, move.id),
     category: quiet(move.category),
     type: quiet(move.type),
-    power: parseInt(move.power),
+    power: power === 1 ? '??' : power === 0 ? '--' : power,
     accuracy: parseInt(move.accuracy),
     pp: parseInt(move.pp),
     effect: move.effect,
-    effectChance: parseInt(move.effectChance)
+    effectChance: effectChance === 0 ? '--' : effectChance,
   }
 }
 

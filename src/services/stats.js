@@ -28,32 +28,6 @@ export async function fetchVersions () {
     .then(({ data }) => data.repository.refs.nodes)
 }
 
-export async function listPokemon (tag, path) {
-  const query = `query { 
-    repository(name: "polishedcrystal", owner: "Rangi42") {
-      object(expression: "${tag}:${
-        path.startsWith('/') ? path.slice(1) : path
-      }") {
-        ... on Tree {
-          entries {
-            name
-            type
-          }
-        }
-      }
-    }
-  }`
-
-  return fetch(GH_API_URL, {
-    method: 'POST',
-    body: JSON.stringify({ query }),
-    headers: ghHeaders(),
-  })
-    .then(handleError)
-    .then((res) => res.json())
-    .then(({ data }) => data.repository.object.entries)
-}
-
 export function fetchEvosMoves (pokemon, version) {
   const route = `${PC_BASE_URL}/${version}${PC_EVOS_ATTACKS}`
   return fetch(route)
@@ -72,7 +46,7 @@ export function fetchBaseStats (pokemon, version) {
 
 export function processEvosAttacksFile (file, pokemon) {
   const regexp = new RegExp(
-    `${pokemon}evosattacks:\n(?<text>.+?) ; no more level-up moves`,
+    `${pokemon}evosattacks:+?\n(?<text>.+?) ; no more level-up moves`,
     'is',
   )
   const {
@@ -139,19 +113,7 @@ export function processEvosAttacksFile (file, pokemon) {
         const store = end === 'else' ? faithful : unfaithful
 
         for (i; lines[i] !== end; i++) {
-          const [
-            level,
-            move,
-          ] = lines[i]
-            .split(/\s+/)
-            .filter((_, j) => j > 0 && j < 3)
-            .join('')
-            .split(',')
-
-          store.moves.push({
-            level: parseInt(level),
-            id: move,
-          })
+          store.moves.push(readMoveLine(lines[i]))
         }
 
         i++
@@ -161,39 +123,32 @@ export function processEvosAttacksFile (file, pokemon) {
       if (!unfaithful.moves) {
         unfaithful.moves = []
       }
-      const [
-        level,
-        move,
-      ] = lines[++i]
-        .split(/\s+/)
-        .filter((_, j) => j > 0 && j < 3)
-        .join('')
-        .split(',')
 
-      unfaithful.moves.push({
-        level: parseInt(level),
-        id: move,
-      })
-
+      unfaithful.moves.push(readMoveLine(lines[++i]))
       i++
     } else {
-      const [
-        level,
-        move,
-      ] = lines[i]
-        .split(/\s+/)
-        .filter((_, j) => j > 0 && j < 3)
-        .join('')
-        .split(',')
-
-      faithful.moves.push({
-        level: parseInt(level),
-        id: move,
-      })
+      faithful.moves.push(readMoveLine(lines[i]))
     }
   }
 
   return hasFaithful ? { faithful, unfaithful } : faithful
+}
+
+export function readMoveLine (line) {
+  const [
+    level,
+    move,
+  ] = line
+    .split(/\s+/)
+    .filter((_, j) => j > 0 && j < 3)
+    .join('')
+    .split(',')
+
+  return {
+    level: parseInt(level),
+    id: move,
+    evolution: line.endsWith('; evolution move'),
+  }
 }
 
 export function readEvolutionLine (line) {
@@ -210,7 +165,9 @@ export function readEvolutionLine (line) {
   return {
     type: quiet(type.split('_')[1]),
     requirement: quiet(requirement),
-    to: quiet(to),
+    to: {
+      id: to,
+    },
   }
 }
 

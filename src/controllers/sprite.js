@@ -8,7 +8,7 @@ import {
 } from '../services/sprite.js'
 import {
   listPokemon,
-} from '../services/stats.js'
+} from '../services/pokemon.js'
 import {
   PC_BAD_SPRITES,
   PC_SPRITE_PATH,
