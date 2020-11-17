@@ -46,7 +46,7 @@ export function fetchBaseStats (pokemon, version) {
 
 export function processEvosAttacksFile (file, pokemon) {
   const regexp = new RegExp(
-    `${pokemon}evosattacks:+?\n(?<text>.+?) ; no more level-up moves`,
+    `${pokemon}(plain)?evosattacks:+?\n(?<text>.+?) ; no more level-up moves`,
     'is',
   )
   const {

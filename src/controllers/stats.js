@@ -24,10 +24,14 @@ import { titleCase } from '../utils/title-case.js'
 
 const path = '/pokemon/stat'
 
-const validForms = [
+const usefulForms = [
   'plain',
   'alolan',
   'galarian',
+]
+
+const validForms = [
+  ...usefulForms,
   'armored',
   'm',
   'f',
@@ -48,13 +52,17 @@ class Stat {
     helica.json(
       res,
       pokemon
-        .map((file) => ({
-          id: file.name.slice(0, -4).toUpperCase(),
-          displayName: pokemonDisplayName(file.name.slice(0, -4), names),
-        })),
+        .map((file) => statSummaryView(file.name, names)),
     )
   }
 
+}
+
+export function statSummaryView (name, names) {
+  return {
+    id: name.slice(0, -4).toUpperCase(),
+    displayName: pokemonDisplayName(name.slice(0, -4), names),
+  }
 }
 
 class StatId {
@@ -69,24 +77,34 @@ class StatId {
       evosMoves,
       moveNames,
       tmsMap,
+      validIds,
     ] = await Promise.all([
       fetchBaseStats(id, version),
       fetchPokemonNames(version),
       fetchEvosMoves(evosMovesName(id), version),
       fetchMoveNames(version),
       fetchTMHMs(version),
+      listPokemon(version, PC_BASE_STATS_PATH),
     ])
 
     helica.json(
       res,
-      faithfulBaseView(id, stats, statsNames, evosMoves, moveNames, tmsMap),
+      faithfulBaseView(
+        id,
+        stats,
+        statsNames,
+        evosMoves,
+        moveNames,
+        tmsMap,
+        validIds.map(({ name }) => name.slice(0, -4)),
+      ),
     )
   }
 
 }
 
 function pokemonDisplayName (id, displayNames) {
-  const parts = id.split('_')
+  const parts = id.toLowerCase().split('_')
   let form = parts.length > 1 ? parts.pop() : null
   let cleanName = parts.join('')
 
@@ -135,26 +153,31 @@ export function faithfulBaseView (
   evosMoves,
   moveNames,
   tmsMap,
+  validIds,
 ) {
   const view = {
     id,
     displayName: pokemonDisplayName(id, statsNames),
     ...pokemonView(
+      id,
       stats.faithful ?? stats,
       statsNames,
       evosMoves.faithful ?? evosMoves,
       moveNames,
       tmsMap,
+      validIds,
     ),
   }
 
   if (stats.unfaithful || evosMoves.unfaithful) {
     view.unfaithful = pokemonView(
+      id,
       stats.unfaithful,
       statsNames,
       evosMoves.unfaithful,
       moveNames,
       tmsMap,
+      validIds,
     )
   }
 
@@ -162,17 +185,19 @@ export function faithfulBaseView (
 }
 
 export function pokemonView (
+  id,
   stats = {},
   statsNames,
   evosMoves = {},
   moveNames,
   tmsMap,
+  validIds,
 ) {
   return {
     types: stats.types,
     abilities: stats.abilities,
     evolutions: evosMoves.evolutions
-      ?.map((evo) => evolutionView(evo, statsNames)),
+      ?.map((evo) => evolutionView(id, evo, statsNames, validIds)),
     heldItems: stats.heldItems,
     gender: stats.gender,
     baseExp: stats.baseExp && parseInt(stats.baseExp),
@@ -189,12 +214,24 @@ export function pokemonView (
   }
 }
 
-export function evolutionView (evo, statsNames) {
+export function evolutionView (id, evo, statsNames, validIds) {
+  let evoForm = usefulForms.find((form) => id.endsWith(form)) ?? ''
+  if (!evoForm && evo.requirement.toLowerCase() === 'odd souvenir') {
+    evoForm = 'alolan'
+  }
+  if (
+    !evoForm &&
+    validIds.every((id) => id.toLowerCase() !== evo.to.id.toLowerCase())
+  ) {
+    evoForm = 'plain'
+  }
+
+  const evoId = `${evo.to.id}${evoForm ? `_${evoForm}` : ''}`.toUpperCase()
   return {
     ...evo,
     to: {
-      id: evo.to.id,
-      displayName: pokemonDisplayName(evo.to.id, statsNames),
+      id: evoId,
+      displayName: pokemonDisplayName(evoId, statsNames),
     },
   }
 }
