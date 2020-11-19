@@ -42,4 +42,4 @@ COPY --from=nodebuilder ./node_modules ./node_modules
 COPY . .
 ENV PATH=/root/.local/bin:$PATH
 
-CMD ["npm", "start"]
+CMD ["node", "src"]
